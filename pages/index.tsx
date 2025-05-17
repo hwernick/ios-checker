@@ -87,7 +87,7 @@ export default function Home() {
               acc[section].push(rule);
               return acc;
             }, {} as Record<string, any[]>)
-          ).map(([section, groupedRules]) => (
+          ).map(([section, groupedRules]: [string, any[]]) => (
             <div key={section} className="mb-6">
               <h3 className="text-md font-semibold mb-2 text-blue-800">{section}</h3>
               <ul className="space-y-2">
