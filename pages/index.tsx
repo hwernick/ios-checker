@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-
 import { useState } from 'react';
 
 export default function Home() {
@@ -29,6 +28,16 @@ export default function Home() {
     setMessage(result.success ? 'Upload successful' : 'Upload failed');
     setResults(result.results || []);
   };
+
+  // ✅ Group the results outside the JSX map to avoid type issues
+  const grouped = Object.entries(
+    results.reduce((acc, rule) => {
+      const section = rule.section || 'Other';
+      if (!acc[section]) acc[section] = [];
+      acc[section].push(rule);
+      return acc;
+    }, {} as Record<string, any[]>)
+  ) as [string, any[]][]; // ✅ Explicitly cast entries to the right type
 
   return (
     <div className="min-h-screen bg-white text-gray-900 p-8 max-w-3xl mx-auto space-y-8">
@@ -76,18 +85,11 @@ export default function Home() {
         {message && <p className="text-sm text-gray-700">{message}</p>}
       </div>
 
-      {results.length > 0 && (
+      {grouped.length > 0 && (
         <div className="border rounded p-4 bg-gray-50">
           <h2 className="text-lg font-semibold mb-3">Scan Results</h2>
 
-          {Object.entries(
-            results.reduce((acc, rule) => {
-              const section = rule.section || 'Other';
-              if (!acc[section]) acc[section] = [];
-              acc[section].push(rule);
-              return acc;
-            }, {} as Record<string, any[]>)
-          ).map(([section, groupedRules]: [string, any[]]) => (
+          {grouped.map(([section, groupedRules]) => (
             <div key={section} className="mb-6">
               <h3 className="text-md font-semibold mb-2 text-blue-800">{section}</h3>
               <ul className="space-y-2">
