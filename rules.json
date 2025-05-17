@@ -1,0 +1,49 @@
+[
+    {
+      "id": "5.1.1",
+      "description": "App must declare camera usage",
+      "key": "NSCameraUsageDescription",
+      "severity": "critical"
+    },
+    {
+      "id": "5.1.2",
+      "description": "App must declare microphone usage",
+      "key": "NSMicrophoneUsageDescription",
+      "severity": "warning"
+    },
+    {
+      "id": "5.1.3",
+      "description": "App must declare location usage",
+      "key": "NSLocationWhenInUseUsageDescription",
+      "severity": "warning"
+    },
+    {
+      "id": "2.3.1",
+      "description": "App title must not exceed 30 characters",
+      "key": "title",
+      "type": "metadata",
+      "severity": "warning"
+    },
+    {
+      "id": "2.3.2",
+      "description": "App description must not contain banned phrases like 'best ever'",
+      "key": "description",
+      "type": "metadata",
+      "severity": "warning"
+    },
+    {
+      "id": "2.3.3",
+      "description": "Keywords must not contain duplicates or banned terms",
+      "key": "keywords",
+      "type": "metadata",
+      "severity": "warning"
+    },
+    {
+      "id": "2.3.4",
+      "description": "Age rating must be a valid integer between 4 and 17",
+      "key": "ageRating",
+      "type": "metadata",
+      "severity": "critical"
+    }
+  ]
+  

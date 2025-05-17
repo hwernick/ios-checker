@@ -1,115 +1,108 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { useState } from 'react';
 
 export default function Home() {
+  const [file, setFile] = useState<File | null>(null);
+  const [message, setMessage] = useState('');
+  const [results, setResults] = useState<any[]>([]);
+  const [metadata, setMetadata] = useState({
+    title: '',
+    description: '',
+    keywords: '',
+    ageRating: ''
+  });
+
+  const handleUpload = async () => {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('metadata', JSON.stringify(metadata));
+
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const result = await res.json();
+    setMessage(result.success ? 'Upload successful' : 'Upload failed');
+    setResults(result.results || []);
+  };
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <div className="min-h-screen bg-white text-gray-900 p-8 max-w-3xl mx-auto space-y-8">
+      <h1 className="text-2xl font-bold">App Store Compliance Checker</h1>
+
+      <div className="space-y-4">
+        <input
+          className="w-full border border-gray-300 p-2 rounded"
+          type="text"
+          placeholder="App Title"
+          value={metadata.title}
+          onChange={e => setMetadata({ ...metadata, title: e.target.value })}
         />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              pages/index.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+        <textarea
+          className="w-full border border-gray-300 p-2 rounded"
+          placeholder="App Description"
+          rows={3}
+          value={metadata.description}
+          onChange={e => setMetadata({ ...metadata, description: e.target.value })}
+        />
+        <input
+          className="w-full border border-gray-300 p-2 rounded"
+          type="text"
+          placeholder="Keywords (comma-separated)"
+          value={metadata.keywords}
+          onChange={e => setMetadata({ ...metadata, keywords: e.target.value })}
+        />
+        <input
+          className="w-full border border-gray-300 p-2 rounded"
+          type="text"
+          placeholder="Age Rating"
+          value={metadata.ageRating}
+          onChange={e => setMetadata({ ...metadata, ageRating: e.target.value })}
+        />
+      </div>
+
+      <div className="space-y-3">
+        <input type="file" onChange={e => setFile(e.target.files?.[0] || null)} />
+        <button
+          onClick={handleUpload}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+        >
+          Upload
+        </button>
+        {message && <p className="text-sm text-gray-700">{message}</p>}
+      </div>
+
+      {results.length > 0 && (
+        <div className="border rounded p-4 bg-gray-50">
+          <h2 className="text-lg font-semibold mb-3">Scan Results</h2>
+
+          {Object.entries(
+            results.reduce((acc, rule) => {
+              const section = rule.section || 'Other';
+              if (!acc[section]) acc[section] = [];
+              acc[section].push(rule);
+              return acc;
+            }, {} as Record<string, any[]>)
+          ).map(([section, groupedRules]) => (
+            <div key={section} className="mb-6">
+              <h3 className="text-md font-semibold mb-2 text-blue-800">{section}</h3>
+              <ul className="space-y-2">
+                {groupedRules.map((r, i) => (
+                  <li
+                    key={i}
+                    className={`p-2 rounded ${r.passed ? 'bg-green-200' : 'bg-red-200'}`}
+                  >
+                    <strong>{r.description}</strong> —{' '}
+                    <span>{r.passed ? '✅ Passed' : '❌ Missing or Invalid'}</span>
+                    <span className="ml-2 text-sm text-gray-700">({r.severity})</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
     </div>
   );
 }
