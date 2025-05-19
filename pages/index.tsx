@@ -5,39 +5,69 @@ import { useState } from 'react';
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [message, setMessage] = useState('');
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<
+    {
+      id: string;
+      description: string;
+      key: string;
+      passed: boolean;
+      severity: string;
+      section?: string;
+    }[]
+  >([]);
   const [metadata, setMetadata] = useState({
     title: '',
     description: '',
     keywords: '',
-    ageRating: ''
+    ageRating: '',
   });
 
   const handleUpload = async () => {
-    if (!file) return;
+    console.log('Upload button clicked');
+    if (!file) {
+      console.log('No file selected');
+      setMessage('Please select a file.');
+      return;
+    }
+
+    console.log('File details:', {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
+    console.log('Metadata:', metadata);
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('metadata', JSON.stringify(metadata));
 
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    });
+    try {
+      console.log('Sending request to /api/upload');
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
 
-    const result = await res.json();
-    setMessage(result.success ? 'Upload successful' : 'Upload failed');
-    setResults(result.results || []);
+      console.log('Response status:', res.status);
+      const result = await res.json();
+      console.log('Upload response:', result);
+
+      setMessage(result.success ? 'Upload successful' : 'Upload failed');
+      setResults(result.results || []);
+    } catch (err) {
+      console.error('Upload failed with error:', err);
+      setMessage('Upload failed due to a network or server error.');
+    }
   };
 
-  // ✅ Group the results outside the JSX map to avoid type issues
   const grouped = Object.entries(
     results.reduce((acc, rule) => {
       const section = rule.section || 'Other';
       if (!acc[section]) acc[section] = [];
       acc[section].push(rule);
       return acc;
-    }, {} as Record<string, any[]>)
-  ) as [string, any[]][]; // ✅ Explicitly cast entries to the right type
+    }, {} as Record<string, typeof results>)
+  ) as [string, typeof results][];
 
   return (
     <div className="min-h-screen bg-white text-gray-900 p-8 max-w-3xl mx-auto space-y-8">
@@ -49,33 +79,39 @@ export default function Home() {
           type="text"
           placeholder="App Title"
           value={metadata.title}
-          onChange={e => setMetadata({ ...metadata, title: e.target.value })}
+          onChange={(e) => setMetadata({ ...metadata, title: e.target.value })}
         />
         <textarea
           className="w-full border border-gray-300 p-2 rounded"
           placeholder="App Description"
           rows={3}
           value={metadata.description}
-          onChange={e => setMetadata({ ...metadata, description: e.target.value })}
+          onChange={(e) =>
+            setMetadata({ ...metadata, description: e.target.value })
+          }
         />
         <input
           className="w-full border border-gray-300 p-2 rounded"
           type="text"
           placeholder="Keywords (comma-separated)"
           value={metadata.keywords}
-          onChange={e => setMetadata({ ...metadata, keywords: e.target.value })}
+          onChange={(e) =>
+            setMetadata({ ...metadata, keywords: e.target.value })
+          }
         />
         <input
           className="w-full border border-gray-300 p-2 rounded"
           type="text"
           placeholder="Age Rating"
           value={metadata.ageRating}
-          onChange={e => setMetadata({ ...metadata, ageRating: e.target.value })}
+          onChange={(e) =>
+            setMetadata({ ...metadata, ageRating: e.target.value })
+          }
         />
       </div>
 
       <div className="space-y-3">
-        <input type="file" onChange={e => setFile(e.target.files?.[0] || null)} />
+        <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
         <button
           onClick={handleUpload}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
@@ -91,7 +127,9 @@ export default function Home() {
 
           {grouped.map(([section, groupedRules]) => (
             <div key={section} className="mb-6">
-              <h3 className="text-md font-semibold mb-2 text-blue-800">{section}</h3>
+              <h3 className="text-md font-semibold mb-2 text-blue-800">
+                {section}
+              </h3>
               <ul className="space-y-2">
                 {groupedRules.map((r, i) => (
                   <li
